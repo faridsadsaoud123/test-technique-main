@@ -10,6 +10,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Event extends Model
 {
     use HasFactory;
+    /**
+     * Ces champs peuvent être remplis automatiquement lors de la création
+    * ou de la mise à jour d'un événement via un formulaire ou une requête.
+    * Cela protège contre le "mass assignment" non autorisé.
+     */
+    protected $fillable = [
+        'title',
+        'starts_at',
+        'ends_at',
+        'user_id'
+    ];
 
     /**
      * Gets the user the event belongs to.
