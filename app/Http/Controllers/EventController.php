@@ -25,35 +25,38 @@ class EventController extends Controller
     }
 
     public function store()
-    {
-        $data = Request::validate([
-            'title' => ['required', 'max:255'],
-            'starts_at' => ['required', 'date:Y-m-d H:i']
-        ]);
+{
+    $data = Request::validate([
+        'title' => ['required', 'max:255'],
+        'starts_at' => ['required', 'date_format:Y-m-d H:i'],
+        'ends_at' => ['nullable', 'date_format:Y-m-d H:i']
+    ]);
 
-        Event::create([
-            ...$data,
-            'starts_at' => Carbon::createFromFormat('Y-m-d H:i', $data['starts_at'])
-        ]);
+    Event::create([
+        'title' => $data['title'],
+        'starts_at' => Carbon::createFromFormat('Y-m-d H:i', $data['starts_at']),
+        'ends_at' => $data['ends_at'] ? Carbon::createFromFormat('Y-m-d H:i', $data['ends_at']) : null
+    ]);
 
-        return Redirect::back();
-    }
+    return Redirect::back();
+}
 
-    public function update(Event $event)
-    {
-        $data = Request::validate([
-            'title' => ['required', 'max:255'],
-            'starts_at' => ['required', 'date:Y-m-d H:i']
-        ]);
+public function update(Event $event)
+{
+    $data = Request::validate([
+        'title' => ['required', 'max:255'],
+        'starts_at' => ['required', 'date_format:Y-m-d H:i'],
+        'ends_at' => ['nullable', 'date_format:Y-m-d H:i']
+    ]);
 
-        $event->update([
-            ...$data,
-            'starts_at' => Carbon::createFromFormat('Y-m-d H:i', $data['starts_at'])
-        ]);
+    $event->update([
+        'title' => $data['title'],
+        'starts_at' => Carbon::createFromFormat('Y-m-d H:i', $data['starts_at']),
+        'ends_at' => $data['ends_at'] ? Carbon::createFromFormat('Y-m-d H:i', $data['ends_at']) : null
+    ]);
 
-        return Redirect::back();
-    }
-
+    return Redirect::back();
+}
     public function destroy(Event $event)
     {
         $event->delete();

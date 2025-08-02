@@ -4,7 +4,7 @@ import { useForm } from "@inertiajs/inertia-vue3";
 import Dialog from "@/Components/Common/DialogModal";
 import Button from "@/Components/Common/Button";
 import Input from "@/Components/Common/Input";
-
+import moment from "moment";
 const emit = defineEmits(["close"]);
 
 const props = defineProps({
@@ -32,10 +32,11 @@ const onAddNew = () => {
 
 // Called when the user submits the form
 const onSubmit = () => {
-    const transform = (data) => ({
-        ...data,
-        starts_at: data.starts_at.format("YYYY-MM-DD HH:mm"),
-    });
+     const transformedData = {
+        title: form.title,
+        starts_at: form.starts_at ? moment(form.starts_at).format("YYYY-MM-DD HH:mm") : null,
+        ends_at: form.ends_at ? moment(form.ends_at).format("YYYY-MM-DD HH:mm") : null,
+    };
 
     const requestParams = {
         preserveScroll: true,
@@ -43,13 +44,18 @@ const onSubmit = () => {
     };
 
     // Stores or updates the item
-    if (editing.value) {
-        form.transform(transform).put(
-            route("events.update", props.itemToEdit.id),
-            requestParams,
-        );
+    if (props.itemToEdit) {
+        form.put(route("events.update", props.itemToEdit.id), {
+            ...transformedData,
+            preserveScroll: true,
+            onSuccess: () => onClose(),
+        });
     } else {
-        form.transform(transform).post(route("events.store"), requestParams);
+        form.post(route("events.store"), {
+            ...transformedData,
+            preserveScroll: true,
+            onSuccess: () => onClose(),
+        });
     }
 };
 
@@ -76,6 +82,20 @@ const onClose = () => {
                 name="title"
                 label="Title"
                 v-model="form.title"
+                class="mb-6"
+            />
+            <Input
+                type="datetime-local"
+                name="starts_at"
+                label="Start Date"
+                v-model="form.starts_at"
+                class="mb-6"
+            />
+            <Input
+                type="datetime-local"
+                name="ends_at"
+                label="End Date"
+                v-model="form.ends_at"
                 class="mb-6"
             />
 
