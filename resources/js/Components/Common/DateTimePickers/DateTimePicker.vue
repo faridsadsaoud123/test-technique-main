@@ -1,76 +1,79 @@
 <script setup>
-import { computed, ref } from "vue";
+import { ref, watch } from "vue";
 import moment from "moment";
-import Button from "../Button";
-import Calendar from "./Partials/CalendarPopup";
 
-defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue"]);
 
 const props = defineProps({
-  modelValue: {
-    type: Object,
-    validator: moment.isMoment,
-  },
-  label: String,
-  type: {
-    type: String,
-    validator: (val) => ["date", "datetime", "time"].includes(val),
-    default: "datetime",
-  },
+    modelValue: {
+        type: [Object, null],
+        default: null
+    },
+    label: {
+        type: String,
+        required: true
+    },
+    utcMode: {
+        type: Boolean,
+        default: false
+    }
 });
 
-// Represents whether or not the datepicker popup is open
-const showPopup = ref(false);
-
-const onBlur = (event) => {
-  // Check if the clicked item was inside the current component
-  if (!event.currentTarget.contains(event.relatedTarget)) {
-    showPopup.value = false;
-  } else {
-    event.currentTarget.focus();
-  }
+const formatForInput = (date) => {
+    if (!date) return { date: '', time: '' };
+    const localDate = props.utcMode ? date.local() : date;
+    return {
+        date: localDate.format('YYYY-MM-DD'),
+        time: localDate.format('HH:mm')
+    };
 };
 
-// Whether or not time or date fields need to be shown
-const hasTime = computed(() => props.type !== "date");
-const hasDate = computed(() => props.type !== "time");
+const inputValues = ref(formatForInput(props.modelValue));
 
-// Format to be used to show the selected value
-const format = computed(() => {
-  switch (props.type) {
-    case "time":
-      return "HH:mm";
-    case "date":
-      return "DD/MM/YYYY";
-    default:
-      return "HH:mm DD/MM/YYYY"; // datetime
-  }
+const updateDateTime = () => {
+    if (inputValues.value.date && inputValues.value.time) {
+        const [year, month, day] = inputValues.value.date.split('-');
+        const [hour, minute] = inputValues.value.time.split(':');
+        
+        let newDate = moment()
+            .year(year)
+            .month(month - 1)
+            .date(day)
+            .hour(hour)
+            .minute(minute);
+            
+        if (props.utcMode) {
+            newDate = newDate.utc();
+        }
+        
+        emit('update:modelValue', newDate);
+    }
+};
+
+watch(() => props.modelValue, (newVal) => {
+    inputValues.value = formatForInput(newVal);
 });
 </script>
 
 <template>
-  <div>
-    <label class="block font-medium text-sm text-gray-700">
-      <span v-if="label">{{ label }}</span>
-    </label>
-    <div class="relative">
-      <button
-        class="px-3 h-12 w-full border border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 rounded-md shadow-sm text-left"
-        @click="showPopup = true"
-        @blur="onBlur"
-      >
-        {{modelValue?.format(format)}}
-        <Calendar
-          :show="showPopup"
-          :value="modelValue"
-          :with-date="hasDate"
-          :with-time="hasTime"
-          @change="$emit('update:modelValue', $event)"
-        />
-      </button>
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ label }}</label>
+        <div class="flex space-x-2">
+            <input
+                type="date"
+                class="border px-2 py-1 rounded w-full"
+                :value="inputValues.date"
+                @input="inputValues.date = $event.target.value; updateDateTime()"
+            />
+            <input
+                type="time"
+                class="border px-2 py-1 rounded w-full"
+                :value="inputValues.time"
+                @input="inputValues.time = $event.target.value; updateDateTime()"
+            />
+        </div>
     </div>
-  </div>
 </template>
 
-<style lang="postcss" scoped>
+<style scoped>
 </style>

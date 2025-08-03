@@ -93,11 +93,12 @@ const onDelete = () => {
                 <template #row="{ item }">
                     <td>{{ item.title }}</td>
                     <td>
-                        {{ moment(item.starts_at).format("HH:mm DD/MM/YYYY") }}
+                        {{ moment.parseZone(item.starts_at).format("HH:mm DD/MM/YYYY") }}
                     </td>
                     <td>
-                        {{ moment(item.ends_at).format("HH:mm DD/MM/YYYY") }}
+                       {{ moment.parseZone(item.ends_at).format("HH:mm DD/MM/YYYY") }}
                     </td>
+
                     <td>
                         <span
                             class="px-2 text-gray-700 hover:text-blue-500 cursor-pointer transition"
