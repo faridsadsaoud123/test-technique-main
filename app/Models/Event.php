@@ -21,7 +21,10 @@ class Event extends Model
         'ends_at',
         'user_id'
     ];
-
+      protected $casts = [
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime'
+    ];
     /**
      * Gets the user the event belongs to.
      */

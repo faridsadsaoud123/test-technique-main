@@ -20,7 +20,13 @@ const props = defineProps({
 });
 
 const dateFilters = ref([null, null]);
+const showDialog = ref(false); // Controle l'affichage du dialogue
+const selectedEvent = ref(null); // Stocke l'evenement sélectionne
 
+const handleAddNew = () => {
+  selectedEvent.value = null; 
+  showDialog.value = true; 
+};
 // Load url params into state if any existed on mount
 onMounted(() => {
     if (props.starts_at) {
@@ -30,8 +36,7 @@ onMounted(() => {
         dateFilters.value[1] = moment(props.ends_at, format);
     }
 });
-
-const itemToEdit = ref(null);
+// const itemToEdit = ref(null);
 const itemToDelete = ref(null);
 
 const onDelete = () => {
@@ -56,9 +61,12 @@ const onDelete = () => {
             <div class="mb-3">
                 <div class="mb-6 flex flex-row justify-between items-end">
                     <div>
+                         <!--  :item-to-edit="selectedEvent" permet de pré-remplir le formulaire en mode édition-->
                         <AddEditDialog
-                            :item-to-edit="itemToEdit"
-                            @close="itemToEdit = null"
+                             :show="showDialog"
+                             :item-to-edit="selectedEvent" 
+                            @close="showDialog = false"
+                            @openAddDialog="handleAddNew"
                         />
                     </div>
                 </div>
@@ -81,7 +89,7 @@ const onDelete = () => {
                     </template>
                 </Dialog>
             </div>
-            <Table :data="events" :headings="['Title', 'Date', 'Actions']">
+            <Table :data="events" :headings="['Title', 'Start Date','End Date', 'Actions']">
                 <template #row="{ item }">
                     <td>{{ item.title }}</td>
                     <td>
@@ -95,9 +103,9 @@ const onDelete = () => {
                             class="px-2 text-gray-700 hover:text-blue-500 cursor-pointer transition"
                         >
                             <vue-feather
-                                type="edit"
+                                 type="edit"
                                 size="1.3rem"
-                                @click="itemToEdit = item"
+                                @click.stop="selectedEvent = item; showDialog = true"
                             />
                         </span>
                         <span
