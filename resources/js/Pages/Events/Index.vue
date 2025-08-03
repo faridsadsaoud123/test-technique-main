@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed  } from "vue";
 import { Inertia } from "@inertiajs/inertia";
 import moment from "moment";
 import AppLayout from "@/Layouts/AppLayout";
@@ -22,6 +22,7 @@ const props = defineProps({
 const dateFilters = ref([null, null]);
 const showDialog = ref(false); // Controle l'affichage du dialogue
 const selectedEvent = ref(null); // Stocke l'evenement sélectionne
+const searchQuery = ref('');
 
 const handleAddNew = () => {
   selectedEvent.value = null; 
@@ -47,6 +48,17 @@ const onDelete = () => {
         },
     });
 };
+const filteredEvents = computed(() => {
+    if (!searchQuery.value) {
+        return props.events;
+    }
+    const query = searchQuery.value.toLowerCase();
+    return props.events.filter(event => 
+        event.title.toLowerCase().includes(query) ||
+        moment(event.starts_at).format("DD/MM/YYYY").includes(query) ||
+        moment(event.ends_at).format("DD/MM/YYYY").includes(query)
+    );
+});
 </script>
 
 <template>
@@ -60,6 +72,22 @@ const onDelete = () => {
         <div class="card">
             <div class="mb-3">
                 <div class="mb-6 flex flex-row justify-between items-end">
+                    <div class="flex items-center space-x-4 w-full">
+                        <!-- Barre de recherche -->
+                        <div class="relative flex-grow max-w-md">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <vue-feather type="search" size="1rem" class="text-gray-400" />
+                            </div>
+                            <input
+                                v-model="searchQuery"
+                                type="text"
+                                placeholder="Search by title or date..."
+                                class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                        
+                       
+                    </div>
                     <div>
                          <!--  :item-to-edit="selectedEvent" permet de pré-remplir le formulaire en mode édition-->
                         <AddEditDialog
@@ -89,17 +117,16 @@ const onDelete = () => {
                     </template>
                 </Dialog>
             </div>
-            <Table :data="events" :headings="['Title', 'Start Date','End Date', 'Actions']">
+            <Table :data="filteredEvents" :headings="['Title', 'Start Date','End Date', 'Actions']">
                 <template #row="{ item }">
-                    <td>{{ item.title }}</td>
-                    <td>
-                        {{ moment.parseZone(item.starts_at).format("HH:mm DD/MM/YYYY") }}
-                    </td>
-                    <td>
-                       {{ moment.parseZone(item.ends_at).format("HH:mm DD/MM/YYYY") }}
-                    </td>
-
-                    <td>
+                    <td class="px-4 py-3">{{ item.title }}</td>
+                        <td class="px-4 py-3">
+                             {{ moment.parseZone(item.starts_at).format("HH:mm DD/MM/YYYY") }}
+                        </td>
+                        <td class="px-4 py-3">
+                             {{ moment.parseZone(item.ends_at).format("HH:mm DD/MM/YYYY") }}
+                        </td>
+                        <td class="px-4 py-3">
                         <span
                             class="px-2 text-gray-700 hover:text-blue-500 cursor-pointer transition"
                         >
