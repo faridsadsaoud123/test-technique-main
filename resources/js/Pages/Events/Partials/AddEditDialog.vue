@@ -5,6 +5,9 @@ import Dialog from "@/Components/Common/DialogModal";
 import Button from "@/Components/Common/Button";
 import Input from "@/Components/Common/Input";
 import moment from "moment";
+import DateTimePicker from "@/Components/Common/DateTimePickers/DateTimePicker.vue";
+
+
 const emit = defineEmits(["close","openAddDialog"]);
 
 const props = defineProps({
@@ -15,57 +18,62 @@ const props = defineProps({
     },
 });
 
-const editing = ref(false);
 
 const form = useForm({
     title: "",
     starts_at: null,
     ends_at: null
 });
-const toDateTimeLocal = (date) => {
-    if (!date) return null;
-    return moment(date).format('YYYY-MM-DDTHH:mm');
-};
-const displayDateTime = (date) => {
-    if (!date) return "";
-    return date.replace('T', ' ');
-};
+
 watch(() => props.itemToEdit, (newVal) => {
     if (newVal) {
         form.title = newVal.title;
-       form.starts_at = toDateTimeLocal(newVal.starts_at);
-        form.ends_at = toDateTimeLocal(newVal.ends_at);
+        form.starts_at = newVal?.starts_at ? moment(newVal.starts_at) : moment();
+    form.ends_at = newVal?.ends_at ? moment(newVal.ends_at) : null;
     } else {
         form.reset();
+        form.starts_at = moment();// Initialiser avec l'heure locale
     }
 }, { immediate: true });
 
+// Un efonction pour verifier que les dates sont valides start date > end date
+// et que l'heure de début est avant l'heure de fin si elles sont le même jour
+const validateDates = () => {
 
-// // Called when the user clicks on the "Add new" button
-// const onAddNew = () => {
-//     form.reset();
-//     editing.value = false;
-// };
+  const start = form.starts_at.valueOf();
+  const end = form.ends_at.valueOf();
+  
+  if (start > end) {
+    alert("La date de fin doit être après la date de début");
+    return false;
+  }
+  
+  return true;
+};
+
 
 // Called when the user submits the form
 const onSubmit = () => {
-    const payload = {
-        title: form.title,
-        starts_at: form.starts_at ? moment(form.starts_at.replace(' ', 'T')).format('YYYY-MM-DD HH:mm') : null,
-        ends_at: form.ends_at ? moment(form.ends_at.replace(' ', 'T')).format('YYYY-MM-DD HH:mm') : null
-    };
+    if (!validateDates()) return;
+    form.transform((data) => ({
+    ...data,
+    starts_at: form.starts_at?.format("YYYY-MM-DD HH:mm"),
+        ends_at: form.ends_at?.format("YYYY-MM-DD HH:mm")
+  }));
     if (props.itemToEdit) {
         form.put(route('events.update', props.itemToEdit.id), {
-            ...payload,
+
             preserveScroll: true,
             onSuccess: () => emit("close")
         });
     } else {
         form.post(route('events.store'), {
-            ...payload,
+            
             preserveScroll: true,
+            
             onSuccess: () => emit("close")
         });
+        
     }
 };
 
@@ -96,21 +104,15 @@ const onClose = () => {
                 v-model="form.title"
                 class="mb-6"
             />
-            <Input
-                type="datetime-local"
-                name="starts_at"
-                label="Start Date"
-                :value="form.starts_at"
-                @input="form.starts_at = displayDateTime($event.target.value)"
-                class="mb-6"
+            <DateTimePicker
+                 v-model="form.starts_at"
+                 label="Start Date"
+                 class="mb-6"
             />
-            <Input
-                type="datetime-local"
-                name="ends_at"
-                label="End Date"
-                :value="form.ends_at"
-                @input="form.ends_at = displayDateTime($event.target.value)"
-                class="mb-6"
+            <DateTimePicker
+                  v-model="form.ends_at"
+                 label="End Date"
+                 class="mb-6"
             />
 
             <template #footer>
